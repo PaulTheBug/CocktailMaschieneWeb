@@ -1,0 +1,201 @@
+<section class="flex flex-col gap-6">
+  <header class="text-center">
+    <h1 class="text-3xl font-bold">Admin-Panel</h1>
+  </header>
+
+  @if (!unlocked()) {
+    <app-pin-pad
+      title="Admin-Passwort eingeben"
+      [disabled]="passwordManager.checking()"
+      (completed)="onAdminPin($event)"
+    />
+    @if (passwordManager.checking()) {
+      <app-loading-spinner label="Passwort wird geprüft …" />
+    }
+  } @else {
+    <div role="tablist" class="tabs tabs-boxed justify-center">
+      <button
+        role="tab"
+        class="tab"
+        [class.tab-active]="tab() === 'levels'"
+        [attr.aria-selected]="tab() === 'levels'"
+        (click)="tab.set('levels')"
+      >
+        Füllstände
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        [class.tab-active]="tab() === 'settings'"
+        [attr.aria-selected]="tab() === 'settings'"
+        (click)="tab.set('settings')"
+      >
+        Einstellungen
+      </button>
+      <button
+        role="tab"
+        class="tab"
+        [class.tab-active]="tab() === 'pumps'"
+        [attr.aria-selected]="tab() === 'pumps'"
+        (click)="tab.set('pumps')"
+      >
+        Pumpen
+      </button>
+    </div>
+
+    @switch (tab()) {
+      @case ('levels') {
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="form-control">
+            <span class="label-text">Füllmenge (ml)</span>
+            <input
+              type="number"
+              min="0"
+              class="input input-bordered w-40"
+              [formControl]="refillControl"
+            />
+          </label>
+          <button type="button" class="btn btn-primary" (click)="refillAll()">
+            Alle auffüllen
+          </button>
+        </div>
+
+        @if (ingredients.isLoading()) {
+          <app-loading-spinner label="Füllstände werden geladen …" />
+        } @else if (ingredients.error()) {
+          <div class="alert alert-error">
+            <span>Füllstände konnten nicht geladen werden.</span>
+            <button type="button" class="btn btn-sm" (click)="ingredients.reload()">Erneut</button>
+          </div>
+        } @else {
+          <div class="grid gap-3 md:grid-cols-2">
+            @for (ing of ingredients.value(); track ing.ingredient_id) {
+              <div class="card bg-base-200">
+                <div class="card-body gap-2 p-4">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold">{{ ing.ingredient_name }}</span>
+                    <span class="text-sm text-base-content/60">
+                      {{ ing.current_level }} / {{ ing.max_level }} ml
+                    </span>
+                  </div>
+                  <progress
+                    class="progress progress-primary"
+                    [value]="ing.current_level"
+                    [max]="ing.max_level || 1"
+                  ></progress>
+                  <div class="flex gap-2">
+                    <input
+                      #lvl
+                      type="number"
+                      min="0"
+                      class="input input-bordered input-sm w-full"
+                      [value]="ing.current_level"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-primary"
+                      (click)="setLevel(ing.ingredient_id, +lvl.value)"
+                    >
+                      Setzen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      @case ('settings') {
+        <div class="grid gap-4 lg:grid-cols-2">
+          <form [formGroup]="pinForm" (ngSubmit)="savePin()" class="card max-w-sm bg-base-200">
+            <div class="card-body gap-3">
+              <h2 class="card-title">Alkohol-PIN ändern</h2>
+              <label class="form-control">
+                <span class="label-text">Alte PIN</span>
+                <input
+                  type="password"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
+                  class="input input-bordered"
+                  formControlName="oldPin"
+                />
+              </label>
+              <label class="form-control">
+                <span class="label-text">Neue PIN</span>
+                <input
+                  type="password"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
+                  class="input input-bordered"
+                  formControlName="newPin"
+                />
+              </label>
+              <button type="submit" class="btn btn-primary" [disabled]="pinForm.invalid">
+                Speichern
+              </button>
+            </div>
+          </form>
+          <form
+            [formGroup]="adminPinForm"
+            (ngSubmit)="saveAdminPin()"
+            class="card max-w-sm bg-base-200"
+          >
+            <div class="card-body gap-3">
+              <h2 class="card-title">Admin-PIN ändern</h2>
+              <label class="form-control">
+                <span class="label-text">Alte Admin-PIN</span>
+                <input
+                  type="password"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
+                  class="input input-bordered"
+                  formControlName="oldPin"
+                />
+              </label>
+              <label class="form-control">
+                <span class="label-text">Neue Admin-PIN</span>
+                <input
+                  type="password"
+                  inputmode="numeric"
+                  maxlength="4"
+                  autocomplete="off"
+                  class="input input-bordered"
+                  formControlName="newPin"
+                />
+              </label>
+              <button type="submit" class="btn btn-primary" [disabled]="adminPinForm.invalid">
+                Speichern
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @case ('pumps') {
+        <p class="text-base-content/70">
+          Button gedrückt halten, damit die jeweilige Pumpe fördert. Beim Loslassen stoppt sie.
+        </p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          @for (pumpId of pumpIds; track pumpId) {
+            <button
+              type="button"
+              class="btn h-16"
+              [class.btn-primary]="activePump() === pumpId"
+              [class.btn-outline]="activePump() !== pumpId"
+              (pointerdown)="startPump(pumpId)"
+              (pointerup)="stopPump(pumpId)"
+              (pointerleave)="stopPump(pumpId)"
+              (pointercancel)="stopPump(pumpId)"
+            >
+              Pumpe {{ pumpId }}
+            </button>
+          }
+        </div>
+      }
+    }
+  }
+</section>

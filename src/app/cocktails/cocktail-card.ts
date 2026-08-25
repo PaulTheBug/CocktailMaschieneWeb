@@ -9,7 +9,7 @@ import { CocktailApi } from '../services/cocktail-api';
   template: `
     <button
       type="button"
-      class="card bg-base-200 shadow-md transition-transform hover:-translate-y-1 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+      class="card bg-base-200 shadow-md transition-transform hover:-translate-y-1 hover:shadow-xl focus-visible:outline-primary"
       (click)="select.emit(cocktail())"
     >
       <figure class="aspect-square overflow-hidden bg-base-300">

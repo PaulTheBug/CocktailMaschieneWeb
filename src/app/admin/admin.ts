@@ -47,7 +47,7 @@ export class Admin {
     }),
   });
 
-  protected readonly pumpIds = Array.from({ length: 16 }, (_, i) => i);
+  protected readonly pumpIds = Array.from({ length: 8 }, (_, i) => i);
   protected readonly activePump = signal<number | null>(null);
 
   protected async onAdminPin(pin: string): Promise<void> {

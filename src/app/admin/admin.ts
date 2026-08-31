@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { CocktailApi } from '../services/cocktail-api';
@@ -26,6 +26,10 @@ export class Admin {
   protected readonly ingredients = this.api.ingredientsResource();
 
   protected readonly refillControl = new FormControl(2000, { nonNullable: true });
+  protected readonly cleaningControl = new FormControl(5, {
+    nonNullable: true,
+    validators: [Validators.min(1), Validators.max(30)],
+  });
   protected readonly pinForm = new FormGroup({
     oldPin: new FormControl('', {
       nonNullable: true,
@@ -49,6 +53,19 @@ export class Admin {
 
   protected readonly pumpIds = Array.from({ length: 8 }, (_, i) => i);
   protected readonly activePump = signal<number | null>(null);
+  protected readonly pumpAssignments = computed(() =>
+    Array.from({ length: 8 }, (_, pumpId) => {
+      const ingredient = this.ingredients
+        .value()
+        .find((item) => item.pump_id === pumpId && item.is_liquid);
+
+      return {
+        pumpId,
+        ingredientId: ingredient?.ingredient_id ?? null,
+        ingredientName: ingredient?.ingredient_name ?? 'frei',
+      };
+    }),
+  );
 
   protected async onAdminPin(pin: string): Promise<void> {
     try {
@@ -139,6 +156,34 @@ export class Admin {
       await this.api.stopPump(pumpId);
     } catch {
       this.toasts.error('Fehler', `Pumpe ${pumpId} konnte nicht gestoppt werden.`);
+    }
+  }
+
+  protected async cleanPump(pumpId: number): Promise<void> {
+    const duration = this.cleaningControl.value || 5;
+    try {
+      const response = await this.api.cleanPump(pumpId, duration);
+      if (response.success) {
+        this.toasts.success('Reinigung', `Pumpe ${pumpId} wurde ${duration}s durchgespült.`);
+      } else {
+        this.toasts.error('Fehler', `Pumpe ${pumpId} konnte nicht gereinigt werden.`);
+      }
+    } catch {
+      this.toasts.error('Fehler', `Reinigung von Pumpe ${pumpId} fehlgeschlagen.`);
+    }
+  }
+
+  protected async cleanAllPumps(): Promise<void> {
+    const duration = this.cleaningControl.value || 5;
+    try {
+      const response = await this.api.cleanAllPumps(duration);
+      if (response.success) {
+        this.toasts.success('Reinigung', `${response.message} (${duration}s pro Pumpe).`);
+      } else {
+        this.toasts.error('Fehler', response.message);
+      }
+    } catch {
+      this.toasts.error('Fehler', 'Reinigung aller Pumpen fehlgeschlagen.');
     }
   }
 }

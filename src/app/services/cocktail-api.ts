@@ -121,4 +121,24 @@ export class CocktailApi {
   testPump(pumpId: number): Promise<unknown> {
     return firstValueFrom(this.http.post(`${this.base}/test-pump/${pumpId}`, {}));
   }
+
+  /** Einzelne Pumpe für einen kurzen Reinigungsdurchlauf laufen lassen. */
+  cleanPump(pumpId: number, durationSec: number): Promise<{ success: boolean; pump_id: number; duration_sec: number }> {
+    return firstValueFrom(
+      this.http.post<{ success: boolean; pump_id: number; duration_sec: number }>(
+        `${this.base}/pump/${pumpId}/clean`,
+        { duration_sec: durationSec },
+      ),
+    );
+  }
+
+  /** Alle Pumpen nacheinander für einen kurzen Reinigungsdurchlauf laufen lassen. */
+  cleanAllPumps(durationSec: number): Promise<{ success: boolean; pump_count: number; duration_sec: number; message: string }> {
+    return firstValueFrom(
+      this.http.post<{ success: boolean; pump_count: number; duration_sec: number; message: string }>(
+        `${this.base}/pump/clean-all`,
+        { duration_sec: durationSec },
+      ),
+    );
+  }
 }

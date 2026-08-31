@@ -176,23 +176,58 @@
       }
 
       @case ('pumps') {
+        <div class="mb-4 grid gap-2 md:grid-cols-2">
+          @for (assignment of pumpAssignments(); track assignment.pumpId) {
+            <div class="alert alert-info p-3 text-sm">
+              <span class="font-semibold">Pumpe {{ assignment.pumpId }}</span>
+              <span>
+                = {{ assignment.ingredientName }}
+                @if (assignment.ingredientId !== null) {
+                  <span class="text-base-content/60">(Zutat #{{ assignment.ingredientId }})</span>
+                }
+              </span>
+            </div>
+          }
+        </div>
+
+        <div class="mb-4 flex flex-wrap items-end gap-3">
+          <label class="form-control">
+            <span class="label-text">Reinigungsdauer pro Pumpe (s)</span>
+            <input
+              type="number"
+              min="1"
+              max="30"
+              class="input input-bordered w-28"
+              [formControl]="cleaningControl"
+            />
+          </label>
+          <button type="button" class="btn btn-warning" (click)="cleanAllPumps()">
+            Alle Pumpen reinigen
+          </button>
+        </div>
+
         <p class="text-base-content/70">
           Button gedrückt halten, damit die jeweilige Pumpe fördert. Beim Loslassen stoppt sie.
         </p>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           @for (pumpId of pumpIds; track pumpId) {
-            <button
-              type="button"
-              class="btn h-16"
-              [class.btn-primary]="activePump() === pumpId"
-              [class.btn-outline]="activePump() !== pumpId"
-              (pointerdown)="startPump(pumpId)"
-              (pointerup)="stopPump(pumpId)"
-              (pointerleave)="stopPump(pumpId)"
-              (pointercancel)="stopPump(pumpId)"
-            >
-              Pumpe {{ pumpId }}
-            </button>
+            <div class="flex flex-col gap-2">
+              <button
+                type="button"
+                class="btn h-16"
+                [class.btn-primary]="activePump() === pumpId"
+                [class.btn-outline]="activePump() !== pumpId"
+                (pointerdown)="startPump(pumpId)"
+                (pointerup)="stopPump(pumpId)"
+                (pointerleave)="stopPump(pumpId)"
+                (pointercancel)="stopPump(pumpId)"
+              >
+                {{ pumpAssignments()[pumpId]?.ingredientName ?? 'Pumpe ' + pumpId }}
+              </button>
+              <button type="button" class="btn btn-sm btn-outline btn-warning" (click)="cleanPump(pumpId)">
+                reinigen
+              </button>
+            </div>
           }
         </div>
       }

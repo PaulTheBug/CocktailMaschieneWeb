@@ -11,5 +11,5 @@ import { Toasts } from './shared/toast';
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('CocktailMaschieneWeb');
+  protected readonly title = signal('Cocktailmixer');
 }

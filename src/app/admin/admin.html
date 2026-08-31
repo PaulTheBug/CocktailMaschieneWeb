@@ -224,7 +224,11 @@
               >
                 {{ pumpAssignments()[pumpId]?.ingredientName ?? 'Pumpe ' + pumpId }}
               </button>
-              <button type="button" class="btn btn-sm btn-outline btn-warning" (click)="cleanPump(pumpId)">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline btn-warning"
+                (click)="cleanPump(pumpId)"
+              >
                 reinigen
               </button>
             </div>
